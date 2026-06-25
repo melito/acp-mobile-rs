@@ -1,0 +1,34 @@
+[package]
+name = "acp-mobile"
+version = "0.1.0"
+edition = "2021"
+description = "Mobile web UI for ACP sessions running through acp-multiplex"
+license = "MIT"
+
+[[bin]]
+name = "acp-mobile"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time", "signal", "process", "fs"] }
+axum = { version = "0.8", features = ["ws"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["limit"] }
+# TLS via rustls (not openssl). axum-server gives us rustls-backed serving.
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+rustls = "0.23"
+# OpenAPI docs via my own crate (documentation-is-the-spec, axum 0.8).
+stonehm = "0.2"
+stonehm-macros = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+clap = { version = "4", features = ["derive"] }
+# 256-bit authkey generation + constant-time compare.
+rand = "0.8"
+subtle = "2"
+hex = "0.4"
+base64 = "0.22"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["test-util"] }
