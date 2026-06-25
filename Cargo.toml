@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Mobile web UI for ACP sessions running through acp-multiplex"
 license = "MIT"
+repository = "https://github.com/melito/acp-mobile-rs"
 
 [[bin]]
 name = "acp-mobile"

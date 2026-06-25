@@ -1,0 +1,42 @@
+name: release
+
+# Cut a release by pushing a version tag:
+#   git tag v0.1.0 && git push github v0.1.0
+# This builds acp-mobile for each target and attaches the archives to a GitHub
+# Release for that tag. cargo-binstall and the agent-relay installer can then
+# download a prebuilt binary instead of compiling from source.
+#
+# NOTE: acp-mobile embeds static/index.html via include_str!, so the web UI
+# ships inside the binary -- the release asset is self-contained, no extra files.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write  # needed to create the Release and upload assets
+
+jobs:
+  upload-assets:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin       # Apple Silicon
+            os: macos-latest
+          - target: x86_64-apple-darwin        # Intel Mac
+            os: macos-latest
+          - target: x86_64-unknown-linux-gnu   # most Linux servers
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu  # ARM Linux boxes
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and upload
+        uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: acp-mobile
+          target: ${{ matrix.target }}
+          archive: $bin-$target
+          token: ${{ secrets.GITHUB_TOKEN }}
