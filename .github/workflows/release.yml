@@ -2,9 +2,9 @@ name: release
 
 # Cut a release by pushing a version tag:
 #   git tag v0.1.0 && git push github v0.1.0
-# This builds acp-mobile for each target and attaches the archives to a GitHub
-# Release for that tag. cargo-binstall and the agent-relay installer can then
-# download a prebuilt binary instead of compiling from source.
+# This creates a GitHub Release for the tag, then builds acp-mobile for each
+# target and attaches the archives. cargo-binstall and the agent-relay installer
+# can then download a prebuilt binary instead of compiling from source.
 #
 # NOTE: acp-mobile embeds static/index.html via include_str!, so the web UI
 # ships inside the binary -- the release asset is self-contained, no extra files.
@@ -17,7 +17,24 @@ permissions:
   contents: write  # needed to create the Release and upload assets
 
 jobs:
+  # The upload action attaches assets to an EXISTING release; pushing a tag only
+  # creates a ref, not a Release object. So create the release first, once, and
+  # have every build job depend on it -- otherwise each matrix leg races to
+  # upload to a release that doesn't exist yet ("release not found").
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create the release if it doesn't exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
+            || gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
+                 --title "${GITHUB_REF_NAME}" --generate-notes
+
   upload-assets:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
